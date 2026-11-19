@@ -3,8 +3,11 @@ package hr.algebra.repository.sql;
 import hr.algebra.model.Role;
 import hr.algebra.model.User;
 import hr.algebra.repository.UserRepository;
+import hr.algebra.utilities.PasswordHasher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import hr.algebra.repository.sql.mapper.UserRowMapper;
 
 import javax.sql.DataSource;
 import java.sql.PreparedStatement;
@@ -18,7 +21,7 @@ import static hr.algebra.repository.sql.queries.UserQueries.*;
 public class UserSqlRepository extends BaseSqlRepository<User> implements UserRepository {
 
     public UserSqlRepository(DataSource dataSource) {
-        super(dataSource);
+        super(dataSource, UserRowMapper.INSTANCE);
     }
 
     private static final Logger log = LoggerFactory.getLogger(UserSqlRepository.class);
@@ -31,12 +34,7 @@ public class UserSqlRepository extends BaseSqlRepository<User> implements UserRe
                 ps -> mapEntityToTable(ps, user)
         );
 
-        return new User(
-                id,
-                user.getUsername(),
-                user.getPasswordHash(),
-                user.getRole()
-        );
+        return user.toBuilder().id(id).build();
     }
 
     @Override
@@ -110,13 +108,8 @@ public class UserSqlRepository extends BaseSqlRepository<User> implements UserRe
     @Override
     public Optional<User> authenticate(String username, String password) throws SQLException {
 
-        return findSingleResult(
-                AUTHENTICATE,
-                statement -> {
-                    statement.setString(1, username);
-                    statement.setString(2, password);
-                }
-        );
+        return findSingleResult(AUTHENTICATE, ps -> ps.setString(1, username))
+                .filter(user -> PasswordHasher.matches(password, user.getPasswordHash()));
     }
 
     @Override
@@ -134,18 +127,6 @@ public class UserSqlRepository extends BaseSqlRepository<User> implements UserRe
             log.error("Failed to delete user with ID={}.", id, e);
             return 0;
         }
-    }
-
-    @Override
-    protected User mapRow(ResultSet rs) throws SQLException {
-        String role = rs.getString("role");
-
-        return new User(
-                rs.getLong("id"),
-                rs.getString("username"),
-                rs.getString("password_hash"),
-                Role.valueOf(role)
-        );
     }
 
     @Override

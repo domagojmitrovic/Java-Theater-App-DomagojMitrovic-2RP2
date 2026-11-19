@@ -9,38 +9,18 @@ import java.util.*;
 
 import org.slf4j.Logger;
 
+import hr.algebra.repository.sql.mapper.CityRowMapper;
+
 import javax.sql.DataSource;
 
+import static hr.algebra.repository.sql.queries.CitySqlQueries.*;
 
 public class CitySqlRepository extends BaseSqlRepository<City> implements CityRepository {
 
 private static final Logger log = LoggerFactory.getLogger(CitySqlRepository.class);
 
-//query todo napravi procedure ako bude vremena
-
-    private static final String SQL_FIND_BY_NAME=
-            "SELECT id, name, postal_code FROM city WHERE name ILIKE ? ORDER BY name, postal_code";
-
-    private static final String SQL_INSERT="INSERT INTO city(name, postal_code) VALUES (?,?)";
-
-    private static final String SQL_FIND_BY_ID="SELECT id, name, postal_number FROM city WHERE id=?";
-
-    private static final String SQL_FIND_ALL="SELECT id, name, postal_code FROM city";
-
-    private static final String SQL_UPDATE="UPDATE city SET name = ?, postal_code = ? WHERE id = ?";
-    private static final String SQL_DELETE = """
-        DELETE FROM city
-        WHERE id = ?
-        """;
-
-    private static final String SQL_COUNT = """
-        SELECT COUNT(*)
-        FROM city
-        """;
-
-
     public CitySqlRepository(DataSource dataSource) {
-        super(dataSource);
+        super(dataSource, CityRowMapper.INSTANCE);
     }
 
     @Override
@@ -59,7 +39,7 @@ private static final Logger log = LoggerFactory.getLogger(CitySqlRepository.clas
     @Override
     public City create(City city) throws SQLException {
         try (Connection con = dataSource.getConnection();
-             PreparedStatement ps = con.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS))//s ovim baza zna da mora vratiti kljuc
+             PreparedStatement ps = con.prepareStatement(SQL_INSERT, Statement.RETURN_GENERATED_KEYS)) // tells the driver to return the generated key
         {
             mapEntityToTable(ps, city);
         int affectedRows=ps.executeUpdate();
@@ -69,12 +49,7 @@ private static final Logger log = LoggerFactory.getLogger(CitySqlRepository.clas
         try(ResultSet generatedKey=ps.getGeneratedKeys()){
             if(generatedKey.next()) {
                 Long generatedId = generatedKey.getLong(1);
-                City cityWithId=new City(
-                        generatedId,
-                        city.name(),
-                        city.postalCode()
-
-                );
+                City cityWithId = city.toBuilder().id(generatedId).build();
                 log.info("New city added ID={}", generatedId);
                 return cityWithId;
             }
@@ -86,8 +61,6 @@ private static final Logger log = LoggerFactory.getLogger(CitySqlRepository.clas
         }
         return city;
     }
-
-
 
     @Override
     public Optional<City> findById(Long id) {
@@ -104,22 +77,14 @@ private static final Logger log = LoggerFactory.getLogger(CitySqlRepository.clas
 
     @Override
     public List<City> retrieveAll() {
-        List<City> cities=new ArrayList<>();
-        try(Connection con= dataSource.getConnection();
-            PreparedStatement ps= con.prepareStatement(SQL_FIND_ALL);
-            ResultSet rs=ps.executeQuery())
-        {
-            while (rs.next()){
-                cities.add(mapRow(rs));
-            }
-            log.info("findAll()-> found {} cities",cities.size());
+        try {
+            List<City> cities = findMany(SQL_FIND_ALL, ps -> {});
+            log.info("findAll()-> found {} cities", cities.size());
+            return cities;
+        } catch (SQLException e) {
+            log.error("Error retrieving cities {}", e.getMessage(), e);
+            return List.of();
         }
-
-        catch (SQLException e) {
-            log.error("Error retrieving cities {}", e.getMessage(),e);
-        }
-
-        return cities;
     }
 
     @Override
@@ -157,31 +122,6 @@ private static final Logger log = LoggerFactory.getLogger(CitySqlRepository.clas
         }
     }
 
-//    @Override
-//    public long count() {
-//        try (Connection con = dataSource.getConnection();
-//             PreparedStatement ps = con.prepareStatement(SQL_COUNT);
-//             ResultSet rs = ps.executeQuery()) {
-//
-//            if (rs.next()) {
-//                return rs.getLong(1);
-//            }
-//
-//        } catch (SQLException e) {
-//            log.error("Greška pri brojanju gradova.", e);
-//        }
-//
-//        return 0;
-//    }
-
-    @Override
-    protected City mapRow(ResultSet rs) throws SQLException {
-        return new City(
-                rs.getLong("id"),
-                rs.getString("name"),
-                rs.getString("postal_code")
-        );
-    }
     @Override
     protected void mapEntityToTable
             (PreparedStatement ps, City city) throws SQLException {

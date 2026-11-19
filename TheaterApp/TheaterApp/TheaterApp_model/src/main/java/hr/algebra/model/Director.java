@@ -47,6 +47,61 @@ public class Director extends Person<Director>{
     public int hashCode() {
         return Objects.hashCode(super.getOib()+this.directorId);
     }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder toBuilder() {
+        return builder()
+                .id(getId())
+                .firstName(getFirstName())
+                .lastName(getLastName())
+                .oib(getOib())
+                .directionStyle(directionStyle)
+                .directorId(directorId);
+    }
+
+    public static class Builder {
+        private Long id;
+        private String firstName;
+        private String lastName;
+        private String oib;
+        private DirectionStyle directionStyle;
+        private String directorId;
+
+        public Builder id(Long id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder firstName(String firstName) {
+            this.firstName = firstName;
+            return this;
+        }
+
+        public Builder lastName(String lastName) {
+            this.lastName = lastName;
+            return this;
+        }
+
+        public Builder oib(String oib) {
+            this.oib = oib;
+            return this;
+        }
+
+        public Builder directionStyle(DirectionStyle directionStyle) {
+            this.directionStyle = directionStyle;
+            return this;
+        }
+
+        public Builder directorId(String directorId) {
+            this.directorId = directorId;
+            return this;
+        }
+
+        public Director build() {
+            return new Director(id, firstName, lastName, oib, directionStyle, directorId);
+        }
+    }
 }
-
-

@@ -1,14 +1,13 @@
 package hr.algebra.repository.sql.mapper;
 
-import hr.algebra.model.Actor;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
-//todo implementiraj mappere
+
+/**
+ * Maps the current row of a {@link ResultSet} to an object of type {@code T}.
+ * Implementations must not advance the cursor.
+ */
 @FunctionalInterface
-public interface RowMapper <T>{
-     T map(ResultSet rs) throws SQLException;
-
-    //todo napravi ovo za sve umjesto map metode u svakoj klasi
-
+public interface RowMapper<T> {
+    T map(ResultSet rs) throws SQLException;
 }

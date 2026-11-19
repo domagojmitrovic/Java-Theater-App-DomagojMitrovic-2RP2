@@ -3,7 +3,7 @@ package hr.algebra.repository.sql;
 import hr.algebra.model.*;
 import hr.algebra.repository.TheaterRepository;
 import hr.algebra.repository.sql.mapper.ActorRowMapper;
-import hr.algebra.repository.sql.mapper.DirectorMapper;
+import hr.algebra.repository.sql.mapper.DirectorRowMapper;
 
 import hr.algebra.repository.sql.mapper.TheaterRowMapper;
 import org.slf4j.Logger;
@@ -19,13 +19,12 @@ import java.util.Optional;
 
 import static hr.algebra.repository.sql.queries.TheaterSqlQueries.*;
 
-//todo builder za sve klase, SQL_SELECT_BASE za sve klase smanji boilerplate
 public class TheaterSqlRepository extends BaseSqlRepository<Theater> implements TheaterRepository {
 
     private static final Logger log= LoggerFactory.getLogger(TheaterSqlRepository.class);
 
     public TheaterSqlRepository(DataSource dataSource) {
-        super(dataSource);
+        super(dataSource, TheaterRowMapper.INSTANCE);
     }
 
 
@@ -174,7 +173,7 @@ public class TheaterSqlRepository extends BaseSqlRepository<Theater> implements 
             return findMany(
                     FIND_ACTORS_BY_THEATER_ID,
                     ps -> ps.setLong(1, theaterId),
-                    ActorRowMapper.ACTOR_ROW_MAPPER
+                    ActorRowMapper.INSTANCE
             );
         } catch (SQLException e) {
             log.error(
@@ -234,7 +233,7 @@ public class TheaterSqlRepository extends BaseSqlRepository<Theater> implements 
             return findMany(
                     FIND_DIRECTORS_BY_THEATER_ID,
                     ps -> ps.setLong(1, theaterId),
-                    DirectorMapper.DIRECTOR_MAPPER
+                    DirectorRowMapper.INSTANCE
             );
         } catch (SQLException e) {
             log.error(
@@ -245,12 +244,6 @@ public class TheaterSqlRepository extends BaseSqlRepository<Theater> implements 
             return List.of();
         }
     }
-
-
-    @Override
-        protected Theater mapRow(ResultSet rs) throws SQLException {
-        return TheaterRowMapper.THEATER_ROW_MAPPER.map(rs);
-        }
 
     @Override
     protected void mapEntityToTable(

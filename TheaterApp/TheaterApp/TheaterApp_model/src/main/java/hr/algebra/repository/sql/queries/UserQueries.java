@@ -4,7 +4,7 @@ public final class UserQueries {
     private UserQueries(){};
 
     public static final String SQL_SELECT_BASE = """
-            SELECT id, username, password, role
+            SELECT id, username, password_hash, role
             FROM app_user
             """;
 
@@ -21,7 +21,7 @@ public final class UserQueries {
             """;
 
     public static final String SQL_INSERT = """
-            INSERT INTO app_user (username, password, role)
+            INSERT INTO app_user (username, password_hash, role)
             VALUES (?, ?, ?::user_role)
             RETURNING id
             """;
@@ -29,7 +29,7 @@ public final class UserQueries {
     public static final String SQL_UPDATE = """
             UPDATE app_user
             SET username = ?,
-                password = ?,
+                password_hash = ?,
                 role = ?::user_role
             WHERE id = ?
             """;
@@ -42,6 +42,5 @@ public final class UserQueries {
         SELECT id, username, password_hash, role
         FROM app_user
         WHERE username = ?
-          AND password_hash = ?
         """;
 }

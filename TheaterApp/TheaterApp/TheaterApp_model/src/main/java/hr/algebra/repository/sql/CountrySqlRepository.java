@@ -5,68 +5,22 @@ import hr.algebra.repository.CountryRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import hr.algebra.repository.sql.mapper.CountryRowMapper;
+
 import javax.sql.DataSource;
 import java.sql.*;
 import java.util.List;
 import java.util.Optional;
 
+import static hr.algebra.repository.sql.queries.CountrySqlQueries.*;
+
 public class CountrySqlRepository extends BaseSqlRepository<Country> implements CountryRepository {
 
     private static final Logger log = LoggerFactory.getLogger(CountrySqlRepository.class);
 
-
-
     public CountrySqlRepository(DataSource dataSource) {
-        super(dataSource);
+        super(dataSource, CountryRowMapper.INSTANCE);
     }
-
-    private static final String SQL_FIND_BY_NAME = """
-        SELECT id, country_code, state_name
-        FROM country
-        WHERE state_name ILIKE ?
-        ORDER BY state_name
-        """;
-    private static final String SQL_FIND_BY_COUNTRY_CODE = """
-        SELECT id, country_code, state_name
-        FROM country
-        WHERE country_code = ?
-        """;
-
-    private static final String SQL_INSERT = """
-        INSERT INTO country (country_code, state_name)
-        VALUES (?, ?)
-        RETURNING id
-        """;
-
-    private static final String SQL_FIND_BY_ID = """
-        SELECT id, country_code, state_name
-        FROM country
-        WHERE id = ?
-        """;
-
-    private static final String SQL_FIND_ALL = """
-        SELECT id, country_code, state_name
-        FROM country
-        ORDER BY state_name, country_code
-        """;
-
-    private static final String SQL_UPDATE = """
-        UPDATE country
-        SET country_code = ?,
-            state_name = ?
-        WHERE id = ?
-        """;
-
-    private static final String SQL_DELETE = """
-        DELETE FROM country
-        WHERE id = ?
-        """;
-
-    private static final String SQL_COUNT = """
-        SELECT COUNT(*)
-        FROM country
-        """;
-
 
     @Override
     public List<Country> findByName(String name) {
@@ -121,11 +75,7 @@ public class CountrySqlRepository extends BaseSqlRepository<Country> implements 
                 {
                     long generatedId = rs.getLong("id");
 
-                    return new Country(
-                            generatedId,
-                            country.countryCode(),
-                            country.stateName()
-                    );
+                    return country.toBuilder().id(generatedId).build();
                 }
             }
 
@@ -170,9 +120,7 @@ public class CountrySqlRepository extends BaseSqlRepository<Country> implements 
         try {
             return findMany(
                     SQL_FIND_ALL,
-                    ps -> {
-                        // No SQL parameters.
-                    }
+                    ps -> {}
             );
 
         } catch (SQLException e) {
@@ -194,7 +142,6 @@ public class CountrySqlRepository extends BaseSqlRepository<Country> implements 
         }
 
         try {
-
 
             return executeUpdate(SQL_UPDATE, ps -> {
                 ps.setString(1, country.countryCode());
@@ -239,32 +186,6 @@ public class CountrySqlRepository extends BaseSqlRepository<Country> implements 
             log.error("Failed to delete country with ID={}.", id, e);
             return 0;
         }
-    }
-//
-//    @Override
-//    public long count() {
-//        try (Connection con = dataSource.getConnection();
-//             PreparedStatement ps = con.prepareStatement(SQL_COUNT);
-//             ResultSet rs = ps.executeQuery()) {
-//
-//            if (rs.next()) {
-//                return rs.getLong(1);
-//            }
-//
-//        } catch (SQLException e) {
-//            log.error("Failed to count countries.", e);
-//        }
-//
-//        return 0;
-//    }
-
-    @Override
-    protected Country mapRow(ResultSet rs) throws SQLException {
-        return new Country(
-                rs.getLong("id"),
-                rs.getString("country_code"),
-                rs.getString("state_name")
-        );
     }
 
     @Override

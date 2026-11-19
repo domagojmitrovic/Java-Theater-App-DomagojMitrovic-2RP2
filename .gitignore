@@ -1,0 +1,40 @@
+# Based on GitHub's Java and Maven .gitignore templates
+
+# Secrets: keep .env.example, never commit the real .env
+.env
+.env.*
+!.env.example
+
+# Compiled class files and logs
+*.class
+*.log
+
+# Package files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+!**/.mvn/wrapper/maven-wrapper.jar
+
+# JVM crash logs
+hs_err_pid*
+replay_pid*
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+.DS_Store
+promjene_model.html

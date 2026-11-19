@@ -39,4 +39,54 @@ public class Actor extends Person<Actor>{
     public int hashCode() {
         return Objects.hashCode(getOib()+actorId);
     }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder toBuilder() {
+        return builder()
+                .id(getId())
+                .firstName(getFirstName())
+                .lastName(getLastName())
+                .oib(getOib())
+                .actorId(actorId);
+    }
+
+    public static class Builder {
+        private Long id;
+        private String firstName;
+        private String lastName;
+        private String oib;
+        private String actorId = "";
+
+        public Builder id(Long id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder firstName(String firstName) {
+            this.firstName = firstName;
+            return this;
+        }
+
+        public Builder lastName(String lastName) {
+            this.lastName = lastName;
+            return this;
+        }
+
+        public Builder oib(String oib) {
+            this.oib = oib;
+            return this;
+        }
+
+        public Builder actorId(String actorId) {
+            this.actorId = actorId;
+            return this;
+        }
+
+        public Actor build() {
+            return new Actor(id, firstName, lastName, oib, actorId);
+        }
+    }
 }

@@ -6,73 +6,20 @@ import hr.algebra.repository.DirectorRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import hr.algebra.repository.sql.mapper.DirectorRowMapper;
+
 import javax.sql.DataSource;
 import java.sql.*;
 import java.util.List;
 import java.util.Optional;
 
+import static hr.algebra.repository.sql.queries.DirectorSqlQueries.*;
+
 public class DirectorSqlRepository extends BaseSqlRepository<Director> implements DirectorRepository {
     public DirectorSqlRepository(DataSource dataSource) {
-        super(dataSource);
+        super(dataSource, DirectorRowMapper.INSTANCE);
     }
     private static final Logger log= LoggerFactory.getLogger(DirectorSqlRepository.class);
-
-    private static final String SQL_INSERT = """
-        INSERT INTO director (
-            first_name,
-            last_name,
-            oib,
-            director_id,
-            direction_style
-        )
-        VALUES (?, ?, ?, ?, ?::direction_style)
-        RETURNING id
-        """;
-
-    private static final String SQL_FIND_BY_ID = """
-        SELECT id, first_name, last_name, oib, director_id, direction_style
-        FROM director
-        WHERE id = ?
-        """;
-    private static final String SQL_FIND_BY_NAME = """
-        SELECT id, first_name, last_name, oib, director_id, direction_style
-        FROM director
-        WHERE first_name ILIKE ?
-           OR last_name ILIKE ?
-           OR first_name || ' ' || last_name ILIKE ?
-        ORDER BY last_name, first_name
-        """;
-    private static final String SQL_FIND_ALL = """
-        SELECT id, first_name, last_name, oib, director_id, direction_style
-        FROM director
-        ORDER BY last_name, first_name, director_id
-        """;
-    private static final String SQL_UPDATE = """
-        UPDATE director
-        SET first_name = ?,
-            last_name = ?,
-            oib = ?,
-            director_id = ?,
-            direction_style = ?::direction_style
-        WHERE id = ?
-        """;
-    private static final String SQL_DELETE = """
-        DELETE FROM director
-        WHERE id = ?
-        """;
-
-    @Override
-    protected Director mapRow(ResultSet rs) throws SQLException {
-        String directionStyle=rs.getString("direction_style");
-
-        return new Director( rs.getLong("id"),
-        rs.getString("first_name"),
-        rs.getString("last_name"),
-        rs.getString("oib"),
-                directionStyle == null ? null : DirectionStyle.valueOf(directionStyle),
-        rs.getString("director_Id")
-        );
-    }
 
     @Override
     protected void mapEntityToTable(PreparedStatement ps, Director director) throws SQLException {
@@ -97,14 +44,7 @@ public class DirectorSqlRepository extends BaseSqlRepository<Director> implement
                 ps -> mapEntityToTable(ps, director)
         );
 
-        return new Director(
-                id,
-                director.getFirstName(),
-                director.getLastName(),
-                director.getOib(),
-                director.getDirectionStyle(),
-                director.getDirectorId()
-        );
+        return director.toBuilder().id(id).build();
     }
 
     @Override
@@ -122,7 +62,6 @@ public class DirectorSqlRepository extends BaseSqlRepository<Director> implement
             return Optional.empty();
         }
     }
-
 
     @Override
     public List<Director> findByName(String name) {
@@ -147,7 +86,6 @@ public class DirectorSqlRepository extends BaseSqlRepository<Director> implement
             return List.of();
         }
     }
-
 
     @Override
     public List<Director> retrieveAll() {
@@ -199,7 +137,8 @@ public class DirectorSqlRepository extends BaseSqlRepository<Director> implement
             log.error("Failed to delete director with ID={}.", id, e);
             return 0;
         }
-    }//todo provjeri radi li
+    }
+
     private String generateNextDirectorId() {
         int highestNumber = retrieveAll()
                 .stream()

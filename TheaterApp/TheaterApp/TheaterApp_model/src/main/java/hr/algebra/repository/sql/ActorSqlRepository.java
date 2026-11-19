@@ -14,60 +14,14 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
+import static hr.algebra.repository.sql.queries.ActorSqlQueries.*;
+
 public class ActorSqlRepository extends BaseSqlRepository<Actor> implements ActorRepository {
 
     Logger log= LoggerFactory.getLogger(ActorSqlRepository.class);
     public ActorSqlRepository(DataSource dataSource) {
-        super(dataSource);
+        super(dataSource, ActorRowMapper.INSTANCE);
     }
-    private static final String SQL_SELECT_BASE = """
-        SELECT id, first_name, last_name, oib, actor_id
-        FROM actor
-        """;
-    private static final String SQL_FIND_ALL = SQL_SELECT_BASE + """
-        ORDER BY last_name, first_name, actor_id
-        """;
-
-    private static final String SQL_FIND_BY_NAME = SQL_SELECT_BASE + """
-        WHERE first_name ILIKE ?
-           OR last_name ILIKE ?
-           OR first_name || ' ' || last_name ILIKE ?
-        ORDER BY last_name, first_name, actor_id
-        """;
-
-    private static final String SQL_FIND_BY_ID = SQL_SELECT_BASE + """
-        WHERE id = ?
-        """;
-
-    private static final String SQL_INSERT = """
-        INSERT INTO actor (first_name, last_name, oib, actor_id)
-        VALUES (?, ?, ?, ?)
-        RETURNING id
-        """;
-    private static final String SQL_UPDATE = """
-        UPDATE actor
-        SET first_name = ?,
-            last_name = ?,
-            oib = ?,
-            actor_id = ?
-        WHERE id = ?
-        """;
-
-
-
-    private static final String SQL_DELETE = """
-        DELETE FROM actor
-        WHERE id = ?
-        """;
-//    @Override
-//    public Optional<Actor> findByActorId(String actorId) {
-//        try {
-//            return findSingleResult(SQL_FIND_BY_ID,ps->ps.setString(1,actorId));
-//        } catch (SQLException e) {
-//            log.error("Error retriving actor ActorID {}.", actorId, e);
-//            return Optional.empty();
-//        }
-//    }
 
     @Override
     public List<Actor> findByName(String name) {
@@ -97,15 +51,8 @@ public class ActorSqlRepository extends BaseSqlRepository<Actor> implements Acto
     public Actor create(Actor actor) throws SQLException {
                     long generatedId = executeInsertReturningId(SQL_INSERT,ps->mapEntityToTable(ps,actor));
 
-                    return new Actor(
-                            generatedId,
-                            actor.getFirstName(),
-                            actor.getLastName(),
-                            actor.getOib(),
-                            actor.getActorId()
-                    );
+                    return actor.toBuilder().id(generatedId).build();
                 }
-
 
     @Override
     public Optional<Actor> findById(Long id) {
@@ -182,12 +129,6 @@ public class ActorSqlRepository extends BaseSqlRepository<Actor> implements Acto
         }
     }
 
-
-    @Override
-    protected Actor mapRow(ResultSet rs) throws SQLException {
-   return ActorRowMapper.ACTOR_ROW_MAPPER.map(rs);
-    }
-
     @Override
     protected void mapEntityToTable(PreparedStatement ps, Actor actor) throws SQLException {
 
@@ -196,7 +137,6 @@ public class ActorSqlRepository extends BaseSqlRepository<Actor> implements Acto
         ps.setString(3, actor.getOib());
         ps.setString(4, actor.getActorId());
     }
-    //todo greska je u constraintu baze. Prepravi i onda koristi ove metode za automatsko generiranje act
     private String generateNextActorId() {
         int highestNumber = retrieveAll()
                 .stream()

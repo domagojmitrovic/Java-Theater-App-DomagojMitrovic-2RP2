@@ -1,12 +1,16 @@
 package hr.algebra.model;
 
 import hr.algebra.exceptions.TheaterInputException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
 public class Theater extends BaseClass<Theater>{
+    private static final Logger log = LoggerFactory.getLogger(Theater.class);
+
     private String name;
     private String address;
     private Integer foundedYear;
@@ -34,7 +38,6 @@ public class Theater extends BaseClass<Theater>{
     }
 
 
-    //Start builder class
     public static class Builder{
             private Long id;
             private String name;
@@ -58,7 +61,7 @@ public class Theater extends BaseClass<Theater>{
             this.imagePath=theater.getImagePath();
             this.country=theater.getCountry();
             this.city=theater.getCity();
-            this.directorsEmployed=new HashSet<>(theater.getDirectorsEmployed()); //dodaj shallowcopy
+            this.directorsEmployed=new HashSet<>(theater.getDirectorsEmployed());
             this.actorsEmployed=new HashSet<>(theater.getActorsEmployed());
             return this;
         }
@@ -79,9 +82,9 @@ public class Theater extends BaseClass<Theater>{
 
     public Builder foundedYear(Integer foundedYear){
         if(foundedYear==null)
-            throw new TheaterInputException("Year founded required");
+            throw rejected("Year founded required");
         if(foundedYear<0)
-            throw new TheaterInputException("Year must be positive number");
+            throw rejected("Year must be positive number");
 
         this.foundedYear=foundedYear;
         return this;
@@ -126,17 +129,21 @@ public class Theater extends BaseClass<Theater>{
 
         public Theater build() {
             if (name == null || name.isBlank()) {
-                throw new TheaterInputException("Theater name is required.");
+                throw rejected("Theater name is required.");
             }
 
-            if (foundedYear == null||foundedYear<0) { //log this
-                throw new TheaterInputException("Founded year is required and must be a positive number.");
+            if (foundedYear == null||foundedYear<0) {
+                throw rejected("Founded year is required and must be a positive number.");
             }
 
             return new Theater(this);
         }
+
+        private static TheaterInputException rejected(String message) {
+            log.warn("Invalid theater input: {}", message);
+            return new TheaterInputException(message);
+        }
     }
-    //end
 
 
         private Theater(Builder builder) {

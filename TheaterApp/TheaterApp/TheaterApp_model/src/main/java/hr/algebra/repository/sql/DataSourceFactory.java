@@ -2,57 +2,37 @@ package hr.algebra.repository.sql;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import hr.algebra.utilities.ConfigLoader;
 
 import javax.sql.DataSource;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
 
 public enum DataSourceFactory {
     INSTANCE;
-    private static final String PROPERTIES="/db.properties";
-    private static final Logger log= LoggerFactory.getLogger(DataSourceFactory.class);
 
     private final DataSource dataSource;
-    DataSourceFactory(){
-        this.dataSource=createDataSource();
+
+    DataSourceFactory() {
+        this.dataSource = createDataSource(new ConfigLoader());
     }
 
     public DataSource getDataSource() {
         return dataSource;
     }
 
-    private DataSource createDataSource(){
-        Properties props=new Properties();
-        try (InputStream is=DataSourceFactory.class.getResourceAsStream(PROPERTIES)) {
-            if(is==null){
-                throw new IllegalStateException("db.prop nije pronaden");
-            }
-            props.load(is);
+    private DataSource createDataSource(ConfigLoader config) {
+        HikariConfig hikari = new HikariConfig();
+        hikari.setJdbcUrl(String.format("jdbc:postgresql://%s:%s/%s",
+                config.get("PG_HOST"),
+                config.get("PG_PORT"),
+                config.get("PG_DATABASE")));
+        hikari.setUsername(config.get("PG_USER"));
+        hikari.setPassword(config.get("PG_PASSWORD"));
 
-            HikariConfig config=new HikariConfig();
-            String host=props.getProperty("PG_HOST");
-            String port=props.getProperty("PG_PORT");
-            String database=props.getProperty("PG_DATABASE");
-            String jdbcUrl=String.format("jdbc:postgresql://%s:%s/%s",host,port,database);
-            config.setJdbcUrl(jdbcUrl);
-            config.setUsername(props.getProperty("PG_USER"));
-            config.setPassword(props.getProperty("PG_PASSWORD"));
-            //hikari
-
-            config.setMaximumPoolSize(Integer.parseInt(props.getProperty("POOL_MAXIMUM_POOL_SIZE")));
-            config.setMinimumIdle(Integer.parseInt(props.getProperty("POOL_MINIMUM_IDLE")));
-            config.setConnectionTimeout(Integer.parseInt(props.getProperty("POOL_CONNECTION_TIMEOUT")));
-            config.setIdleTimeout(Integer.parseInt(props.getProperty("POOL_IDLE_TIMEOUT")));
-            config.setMaxLifetime(Integer.parseInt(props.getProperty("POOL_MAX_LIFETIME")));
-            return new HikariDataSource(config);
-        } catch (IOException e) { //TODO dodaj logging i excpetion custom
-            throw new RuntimeException(e);
-        }
-
-
+        hikari.setMaximumPoolSize(config.getInt("POOL_MAXIMUM_POOL_SIZE"));
+        hikari.setMinimumIdle(config.getInt("POOL_MINIMUM_IDLE"));
+        hikari.setConnectionTimeout(config.getInt("POOL_CONNECTION_TIMEOUT"));
+        hikari.setIdleTimeout(config.getInt("POOL_IDLE_TIMEOUT"));
+        hikari.setMaxLifetime(config.getInt("POOL_MAX_LIFETIME"));
+        return new HikariDataSource(hikari);
     }
 }
-

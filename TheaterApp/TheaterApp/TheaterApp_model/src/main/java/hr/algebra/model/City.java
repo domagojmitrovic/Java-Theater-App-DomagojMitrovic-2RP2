@@ -18,6 +18,37 @@ public record City(Long id,String name,String postalCode) {
     public String toString() {
         return name;
     }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder toBuilder() {
+        return builder().id(id).name(name).postalCode(postalCode);
+    }
+
+    public static class Builder {
+        private Long id;
+        private String name;
+        private String postalCode;
+
+        public Builder id(Long id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder postalCode(String postalCode) {
+            this.postalCode = postalCode;
+            return this;
+        }
+
+        public City build() {
+            return new City(id, name, postalCode);
+        }
+    }
 }
-
-

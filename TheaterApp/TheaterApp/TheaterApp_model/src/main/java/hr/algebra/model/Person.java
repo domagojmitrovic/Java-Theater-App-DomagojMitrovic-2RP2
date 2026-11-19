@@ -1,29 +1,29 @@
 package hr.algebra.model;
 
 import hr.algebra.exceptions.InvalidOibException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
-//TODO:Validacija Oiba ovdje
+
 public abstract class Person<T extends Person<T>> extends BaseClass<T>{
+    private static final Logger log = LoggerFactory.getLogger(Person.class);
+    private static final int OIB_LENGTH = 11;
+
     private String firstName;
     private String lastName;
     private String oib;
 
 
     protected Person(String firstName, String lastName, String oib) {
-        //super(null);
         this(null,firstName,lastName,oib);
-//        this.firstName = Objects.requireNonNull(firstName,"Name can't be empty");
-//        this.lastName = Objects.requireNonNull(lastName,"Last name can't be empty");
-//        this.oib = Objects.requireNonNull(oib,"OIB can't be empty");
-
     }
 
     protected Person(Long id, String firstName, String lastName, String oib) {
         super(id);
         this.firstName = firstName;
         this.lastName = lastName;
-        oibValidator(oib);
+        validateOib(oib);
         this.oib = oib;
     }
 
@@ -48,22 +48,22 @@ public abstract class Person<T extends Person<T>> extends BaseClass<T>{
     }
 
     public void setOib(String oib) throws InvalidOibException {
-        try{
-            oibValidator(oib);
-            this.oib = oib;
+        try {
+            validateOib(oib);
         } catch (InvalidOibException e) {
-            System.out.println(e.getMessage()); //dodaj logiranje greske
+            log.warn("Rejected invalid OIB for {} {}: {}", firstName, lastName, e.getMessage());
+            throw e;
         }
-
+        this.oib = oib;
     }
 
-    private void oibValidator(String oib) throws InvalidOibException {
-        if (oib ==null|| oib.length() != 11||oib.trim().isBlank()) {
-            throw new InvalidOibException("OIB: " +oib+" must be 11 characters long");
+    private static void validateOib(String oib) throws InvalidOibException {
+        if (oib == null || oib.length() != OIB_LENGTH) {
+            throw new InvalidOibException("OIB: " + oib + " must be " + OIB_LENGTH + " characters long");
         }
         for (char c : oib.toCharArray()) {
             if (!Character.isDigit(c)) {
-                throw new InvalidOibException("OIB: "+oib+" must have only numbers ");
+                throw new InvalidOibException("OIB: " + oib + " must have only numbers");
             }
         }
     }

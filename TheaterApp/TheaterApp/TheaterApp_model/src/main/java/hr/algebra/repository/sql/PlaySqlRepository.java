@@ -2,11 +2,11 @@ package hr.algebra.repository.sql;
 
 import hr.algebra.model.*;
 import hr.algebra.repository.PlayRepository;
+import hr.algebra.repository.sql.mapper.ActorRowMapper;
 import hr.algebra.repository.sql.mapper.PlayRowMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import static hr.algebra.repository.sql.queries.PlaySqlQueries.*;
-import static hr.algebra.repository.sql.mapper.ActorRowMapper.ACTOR_ROW_MAPPER;
 
 import javax.sql.DataSource;
 import java.sql.PreparedStatement;
@@ -16,12 +16,11 @@ import java.util.List;
 import java.util.Optional;
 
 public class PlaySqlRepository extends BaseSqlRepository<Play> implements PlayRepository {
-//todo napisi procedure za ove upite predugacko je za kod
     private static final Logger log = LoggerFactory.getLogger(PlaySqlRepository.class);
 
 
     public PlaySqlRepository(DataSource dataSource) {
-        super(dataSource);
+        super(dataSource, PlayRowMapper.INSTANCE);
     }
 
     @Override
@@ -167,7 +166,7 @@ public class PlaySqlRepository extends BaseSqlRepository<Play> implements PlayRe
             return findMany(
                     FIND_ACTORS_BY_PLAY_ID,
                     ps -> ps.setLong(1, playId),
-                    ACTOR_ROW_MAPPER
+                    ActorRowMapper.INSTANCE
             );
 
         } catch (SQLException e) {
@@ -177,11 +176,6 @@ public class PlaySqlRepository extends BaseSqlRepository<Play> implements PlayRe
         }
     }
 
-
-    @Override
-    protected Play mapRow(ResultSet rs) throws SQLException {
-    return PlayRowMapper.PLAY_ROW_MAPPER.map(rs);
-    }
     @Override
     protected void mapEntityToTable(
             PreparedStatement ps,

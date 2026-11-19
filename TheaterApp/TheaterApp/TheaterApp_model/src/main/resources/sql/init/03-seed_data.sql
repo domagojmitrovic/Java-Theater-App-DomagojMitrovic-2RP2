@@ -9,8 +9,9 @@
 -- - testiranje zaposlenih glumaca i redatelja po kazalištu
 --
 -- Napomena o lozinkama:
--- Vrijednosti password_hash u ovoj skripti su obične testne
--- lozinke, samo za lokalni razvoj. Nisu sigurni hash-evi.
+-- Vrijednosti password_hash su PBKDF2 hash-evi (iterations:salt:hash)
+-- generirani klasom PasswordHasher. Testne lozinke: admin / admin,
+-- korisnik / korisnik123, ana.user / ana123, ...
 -- ============================================================
 
 \set ON_ERROR_STOP on
@@ -28,14 +29,14 @@ BEGIN;
 
 INSERT INTO app_user (username, password_hash, role)
 VALUES
-    ('admin', 'admin', 'ADMIN'),
-    ('korisnik', 'korisnik123', 'USER'),
-    ('admin', 'admin123', 'ADMIN'),
-    ('ana.user', 'ana123', 'USER'),
-    ('marko.user', 'marko123', 'USER'),
-    ('ivana.user', 'ivana123', 'USER'),
-    ('luka.user', 'luka123', 'USER'),
-    ('petra.user', 'petra123', 'USER')
+    ('admin', '120000:ljQGrurQp/XLABsmOyiW4A==:nfbVnuCxJkYdfl9cB8a5AJRrmggckV5EtN6rYEORM/s=', 'ADMIN'),
+    ('korisnik', '120000:Mrnh+8qfaWlU5Vxhkclh8Q==:3CGrSs6F+9NVnYgTDLT6jQ0LDw/D/zbQlim0TdRkQvU=', 'USER'),
+    ('admin', '120000:JjTNkQpC9BYoJeXPRoNYOA==:97Q2x9h7FwdDiducKYHRpQ7GdeO+vbe2U4SeW7+ufnw=', 'ADMIN'),
+    ('ana.user', '120000:1lh5UgMvbAw+GJ+EMfob/g==:vt/LYH0IjWGJq4ZfcWoamMxgdSRNNLnp+hJUhZHJQj0=', 'USER'),
+    ('marko.user', '120000:y/mG10hpSH3VnNxsbo93mA==:gVE/bZpA9b2L1gtNACoRLptwtzipxgIRAOLmz/Ni9Yc=', 'USER'),
+    ('ivana.user', '120000:ftcVMiLGzmj3NhGXAvs/Bw==:4ur6OUVJJ8ALSUZoj899I9KqOL1hALge2VzLSnRAElY=', 'USER'),
+    ('luka.user', '120000:GJzdXKaLJNDylfrMqsqJog==:Uz7T42vVcAeNbDiyg1Y0kdvnD/R2wPR3Rg3WFyADhho=', 'USER'),
+    ('petra.user', '120000:h8yyHIhCS5lbpc3+e5szkw==:DGKojKSv10A/xuwKa/Lk61nbKQOInMVLzBOwc8UJCGU=', 'USER')
 ON CONFLICT (username) DO NOTHING;
 
 

@@ -13,28 +13,19 @@ import java.util.Optional;
 
 public abstract class BaseSqlRepository <T>{
     protected final DataSource dataSource;
+    private final RowMapper<T> rowMapper;
 
-    protected BaseSqlRepository(DataSource dataSource) {
+    protected BaseSqlRepository(DataSource dataSource, RowMapper<T> rowMapper) {
         this.dataSource = dataSource;
+        this.rowMapper = rowMapper;
     }
 
-
-
-    protected abstract T mapRow(ResultSet resultSet) throws SQLException;
+    protected T mapRow(ResultSet resultSet) throws SQLException {
+        return rowMapper.map(resultSet);
+    }
 
     protected List<T> findMany(String sql, SqlConsumer<PreparedStatement> parameterSetter) throws SQLException {
-        List<T> result=new ArrayList<>();
-
-           try (Connection con=dataSource.getConnection();
-           PreparedStatement ps=con.prepareStatement(sql)){
-               parameterSetter.accept(ps);
-               try(ResultSet rs= ps.executeQuery()){
-                   while (rs.next()){
-                       result.add(mapRow(rs));
-                   }
-               }
-           }
-        return result;
+        return findMany(sql, parameterSetter, rowMapper);
     }
 
     protected <R> List<R> findMany(String sql, SqlConsumer<PreparedStatement> parameterMapper, RowMapper<R> rowMapper) throws SQLException {
